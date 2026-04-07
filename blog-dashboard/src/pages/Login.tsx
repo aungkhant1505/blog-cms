@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Lock, Mail, Loader2 } from 'lucide-react';
 import api from '../api/axios'; // Keep axios for the actual call
+
+interface LoginVariables {
+    email: string;
+    password: string;
+}
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -10,7 +15,7 @@ export default function Login() {
     const navigate = useNavigate();
 
     // The Mutation: Handles the logic and state
-    const loginMutation = useMutation({
+    const loginMutation = useMutation<any, Error, LoginVariables>({
         mutationFn: async (credentials) => {
             const response = await api.post('/login', credentials);
             return response.data;
@@ -21,7 +26,7 @@ export default function Login() {
         },
     });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         loginMutation.mutate({ email, password });
     };

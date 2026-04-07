@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
@@ -14,7 +15,7 @@ class CategoryController extends Controller
     public function index()
     {
         // Returning all categories (useful for populating your React dropdowns)
-        $categories = Category::all();
+        $categories = Category::orderBy('name', 'asc')->get();
         
         return response()->json($categories);
     }
@@ -25,11 +26,16 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:categories',
+            'name' => 'required|string|max:255|unique:categories,name',
+            'slug' => 'required|string|max:255|unique:categories,slug',
         ]);
 
-        $category = Category::create($validated);
+        $slug = $validated['slug'] ?? Str::slug($validated['name']);
+
+        $category = Category::create([
+            'name' => $validated['name'],
+            'slug' => $slug,
+        ]);
 
         return response()->json([
             'message' => 'Category created successfully',
@@ -51,9 +57,13 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
+            'name' => 'sometimes|required|string|max:255|unique:categories,name,' . $category->id,
             'slug' => 'sometimes|required|string|max:255|unique:categories,slug,' . $category->id,
         ]);
+
+        if (isset($validated['name']) && !isset($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['name']);
+        }
 
         $category->update($validated);
 
