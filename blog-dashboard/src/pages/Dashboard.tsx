@@ -1,5 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, LogOut, LayoutDashboard, Loader2, FileText } from 'lucide-react';
 import api from '../api/axios';
 
@@ -27,6 +27,7 @@ interface PaginatedResponse {
 
 export default function Dashboard() {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     const {data: postsData, isLoading, isError} = useQuery<PaginatedResponse>({
         queryKey: ['posts'],
@@ -46,6 +47,22 @@ export default function Dashboard() {
             navigate('/login');
         }
     };
+
+    const deleteMutation = useMutation({
+        mutationFn: async (postId: number) => {
+            await api.delete(`/posts/${postId}`);
+        },
+        onSuccess: () => {
+            // This forces TanStack Query to refetch the posts automatically!
+            queryClient.invalidateQueries({queryKey: ['posts']});
+        }
+    })
+
+    const handleDelete = (id: number, title: string) => {
+        if (window.confirm(`Are you sure you want to delete the post "${title}"? This action cannot be undone.`)) {
+            deleteMutation.mutate(id);
+        }
+    }
 
     return (
         <div className="min-h-screen flex bg-gray-50">
@@ -134,11 +151,18 @@ export default function Dashboard() {
                                             </td>
                                             <td className="p-5 text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                                        <Edit size={18} />
-                                                    </button>
-                                                    <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                                        <Trash2 size={18} />
+                                                    <Link
+                                                        to={`/edit-post/${post.id}`}
+                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-block">
+                                                            <Edit size={18} />
+                                                    </Link>
+                                                    <button onClick={() => handleDelete(post.id, post.title)} disabled={deleteMutation.isPending}
+                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                        {deleteMutation.isPending ? (
+                                                            <Loader2 size={18} className="animate-spin" />
+                                                        ) : (
+                                                            <Trash2 size={18} />
+                                                        )}
                                                     </button>
                                                 </div>
                                             </td>

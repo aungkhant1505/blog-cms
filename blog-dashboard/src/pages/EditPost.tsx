@@ -1,53 +1,64 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Save, ArrowLeft, Loader2, Type, AlignLeft, Folder, Link as LinkIcon } from 'lucide-react';
-import api from '../api/axios';
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Link, useNavigate, useParams } from "react-router-dom"
+import api from "../api/axios";
+import { useState } from "react";
+import { AlignLeft, ArrowLeft, Folder, LinkIcon, Loader2, Save, Type } from "lucide-react";
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
 interface Category {
     id: number;
     name: string;
-    slug: string;
 }
 
 interface PostVariables {
     title: string;
-    slug: string;
     content: string;
+    slug: string;
     category_id: number | '';
     is_published: boolean;
 }
 
-// ✅ Define this outside your component
 const editorModules = {
     toolbar: [
         [{ 'header': [1, 2, 3, false] }],
         ['bold', 'italic', 'underline', 'strike'],
         [{ 'list': 'ordered'}, { 'list': 'bullet' }],
         ['link', 'blockquote', 'code-block'],
-        ['clean'] // removes formatting
+        ['clean']
     ],
 };
 
-export const CreatePost = () => {
+export const EditPost = () => {
+    const { id } = useParams(); // Gets the post ID from the URL
+    const navigate = useNavigate();
+
     const [title, setTitle] = useState('');
-    const [slug, setSlug] = useState('');
     const [content, setContent] = useState('');
+    const [slug, setSlug] = useState('');
     const [categoryId, setCategoryId] = useState<number | ''>('');
     const [isPublished, setIsPublished] = useState(false);
 
-    const navigate = useNavigate();
+    // Fetch the specific post data to pre-fill the form
+    const { isLoading: loadingPost } = useQuery({
+        queryKey: ['post', id],
+        queryFn: async () => {
+            const response = await api.get(`/posts/${id}`);
+            const post = response.data;
 
-    useEffect(() => {
-        const generatedSlug = title.toLowerCase()
-            .trim()
-            .replace(/ /g, '-')
-            .replace(/[^\w-]+/g, '');
-        setSlug(generatedSlug);
-    }, [title]);
+            setTitle(post.title);
+            setContent(post.content);
+            setSlug(post.slug);
+            setCategoryId(post.category_id);
+            setIsPublished(post.is_published);
 
+            return post;
+        },
+        // We don't want to re-fetch and overwrite user edits if they switch tabs
+        staleTime: Infinity,
+    })
+
+    // Fetch Categories for the dropdown
     const { data: categories, isLoading: loadingCategories } = useQuery<Category[]>({
         queryKey: ['categories'],
         queryFn: async () => {
@@ -56,32 +67,36 @@ export const CreatePost = () => {
         }
     })
 
-    const createPostMutation = useMutation<any, Error, PostVariables>({
-        mutationFn: async (newPost) => {
-            const response = await api.post('/posts', newPost);
+    const updatePostMutation = useMutation<any, Error, PostVariables>({
+        mutationFn: async (updatedPost) => {
+            const response = await api.put(`/posts/${id}`, updatedPost);
             return response.data;
         },
-        onSuccess: () => {
-            navigate('/dashboard');
-        }
-    });
+        onSuccess: () => navigate('/dashboard')
+    })
 
     const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
-        
-        // Safety check to ensure categoryId is a number before submitting
         if (categoryId === '') return;
 
-        createPostMutation.mutate({ 
-            title, 
-            slug, 
-            content, 
-            category_id: categoryId, 
-            is_published: isPublished 
+        updatePostMutation.mutate({
+            title,
+            content,
+            slug,
+            category_id: categoryId,
+            is_published: isPublished,
         });
-    };
+    }
 
-  return (
+    if (loadingPost) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <Loader2 size={40} className="animate-spin text-blue-500" />
+            </div>
+        )
+    }
+
+    return (
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
@@ -89,69 +104,45 @@ export const CreatePost = () => {
                         <Link to="/dashboard" className="p-2 bg-white rounded-full shadow-sm hover:bg-gray-100 transition-colors">
                             <ArrowLeft size={20} className="text-gray-600" />
                         </Link>
-                        <h1 className="text-3xl font-bold text-gray-900">Write a New Post</h1>
+                        <h1 className="text-3xl font-bold text-gray-900">Edit Post</h1>
                     </div>
                 </div>
 
-                {createPostMutation.isError && (
-                    <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 font-medium">
-                        Failed to save post. Please check all fields and try again.
+                {updatePostMutation.isError && (
+                    <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl font-medium">
+                        Failed to update post. Please try again.
                     </div>
                 )}
 
+                {/* Form matches the Create screen exactly! */}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Title */}
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase mb-3">
                                 <Type size={16} className="text-blue-500" /> Title
                             </label>
-                            <input 
-                                type="text" required value={title} onChange={(e) => setTitle(e.target.value)}
-                                className="w-full text-lg font-semibold bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:font-normal"
-                                placeholder="Post Title"
-                            />
+                            <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} className="w-full text-lg font-semibold bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
                         </div>
 
-                        {/* Slug */}
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase mb-3">
                                 <LinkIcon size={16} className="text-blue-500" /> URL Slug
                             </label>
-                            <input 
-                                type="text" required value={slug} onChange={(e) => setSlug(e.target.value)}
-                                className="w-full text-lg bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                placeholder="post-title-slug"
-                            />
+                            <input type="text" required value={slug} onChange={(e) => setSlug(e.target.value)} className="w-full text-lg bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Category Dropdown */}
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase mb-3">
                                 <Folder size={16} className="text-blue-500" /> Category
                             </label>
-                            <select 
-                                required 
-                                value={categoryId} 
-                                onChange={(e) => setCategoryId(Number(e.target.value))}
-                                className="w-full text-lg bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                            >
+                            <select required value={categoryId} onChange={(e) => setCategoryId(Number(e.target.value))} className="w-full text-lg bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
                                 <option value="" disabled>Select a category...</option>
-                                {loadingCategories ? (
-                                    <option disabled>Loading...</option>
-                                ) : (
-                                    categories?.map(category => (
-                                        <option key={category.id} value={category.id}>
-                                            {category.name}
-                                        </option>
-                                    ))
-                                )}
+                                {loadingCategories ? <option disabled>Loading...</option> : categories?.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                             </select>
                         </div>
 
-                        {/* Publish Toggle */}
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                             <div>
                                 <label className="text-sm font-bold text-gray-700 uppercase block mb-1">Publish Status</label>
@@ -164,19 +155,10 @@ export const CreatePost = () => {
                         </div>
                     </div>
 
-                    {/* Content */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <label className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase mb-3">
                             <AlignLeft size={16} className="text-blue-500" /> Content
                         </label>
-                        {/* <textarea 
-                            required value={content} onChange={(e) => setContent(e.target.value)} rows={10}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-y"
-                            placeholder="Write your masterpiece here..."
-                        /> */}
-                        {/* We wrap it in a div with a fixed height and bottom margin
-                        because Quill's toolbar takes up space outside the editor box! 
-                        */}
                         <div className="h-72 mb-12">
                             <ReactQuill 
                                 theme="snow" 
@@ -184,23 +166,14 @@ export const CreatePost = () => {
                                 onChange={setContent} 
                                 modules={editorModules}
                                 className="h-full bg-white rounded-b-xl"
-                                placeholder="Write your masterpiece here..."
+                                placeholder="Edit your masterpiece here..."
                             />
                         </div>
                     </div>
 
-                    {/* Submit Button */}
                     <div className="flex justify-end">
-                        <button 
-                            type="submit" 
-                            disabled={createPostMutation.isPending || categoryId === ''} 
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                            {createPostMutation.isPending ? (
-                                <> <Loader2 className="animate-spin" size={20} /> Saving... </>
-                            ) : (
-                                <> <Save size={20} /> Publish Post </>
-                            )}
+                        <button type="submit" disabled={updatePostMutation.isPending || categoryId === ''} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition-all disabled:opacity-60">
+                            {updatePostMutation.isPending ? <><Loader2 className="animate-spin" size={20} /> Updating...</> : <><Save size={20} /> Update Post</>}
                         </button>
                     </div>
                 </form>
