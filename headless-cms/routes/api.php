@@ -13,7 +13,7 @@ Route::get('/posts/{post}', [PostController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{category}', [CategoryController::class, 'show']);
 
-Route::middleware('auth:sanctum')->group(function ()  {
+Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/user', function (Request $request) {
@@ -27,4 +27,6 @@ Route::middleware('auth:sanctum')->group(function ()  {
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::put('/categories/{category}', [CategoryController::class, 'update']);
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
+
+    Route::get('/posts/slug/{slug}', [PostController::class, 'showBySlug']);
 });

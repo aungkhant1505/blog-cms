@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom"
 import api from "../api/axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlignLeft, ArrowLeft, Folder, LinkIcon, Loader2, Save, Type } from "lucide-react";
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -40,23 +40,27 @@ export const EditPost = () => {
     const [isPublished, setIsPublished] = useState(false);
 
     // Fetch the specific post data to pre-fill the form
-    const { isLoading: loadingPost } = useQuery({
+    const { data: postData, isLoading: loadingPost } = useQuery({
         queryKey: ['post', id],
         queryFn: async () => {
             const response = await api.get(`/posts/${id}`);
-            const post = response.data;
-
-            setTitle(post.title);
-            setContent(post.content);
-            setSlug(post.slug);
-            setCategoryId(post.category_id);
-            setIsPublished(post.is_published);
-
-            return post;
+            return response.data;
         },
         // We don't want to re-fetch and overwrite user edits if they switch tabs
         staleTime: Infinity,
     })
+
+    // Use a useEffect to watch 'postData'
+    // Whenever postData arrives (from server OR cache), update the form
+    useEffect(() => {
+        if (postData) {
+            setTitle(postData.title);
+            setContent(postData.content);
+            setSlug(postData.slug);
+            setCategoryId(postData.category_id);
+            setIsPublished(postData.is_published);
+        }
+    }, [postData])
 
     // Fetch Categories for the dropdown
     const { data: categories, isLoading: loadingCategories } = useQuery<Category[]>({

@@ -16,7 +16,7 @@ class PostController extends Controller
         // Eager load the category and paginate for your React frontend
         $posts = Post::with('category')
             ->latest()
-            ->paginate(10); 
+            ->paginate(10);
 
         return response()->json($posts);
     }
@@ -82,5 +82,14 @@ class PostController extends Controller
         return response()->json([
             'message' => 'Post deleted successfully'
         ], 200);
+    }
+
+    public function showBySlug($slug)
+    {
+        $post = Post::with('category')
+            ->where('slug', $slug)
+            ->where('is_published', true)
+            ->first();
+        return response()->json($post);
     }
 }
