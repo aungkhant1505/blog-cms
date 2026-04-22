@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
     // Replace with your local Laravel URL for now (e.g., http://headless-cms.test/api)
-    baseURL: 'http://localhost:8000/api',
+    baseURL: 'https://xa2xbe3lnd.execute-api.us-east-1.amazonaws.com/api',
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -20,3 +20,5 @@ api.interceptors.request.use(config => {
 });
 
 export default api;
+// https://xa2xbe3lnd.execute-api.us-east-1.amazonaws.com
+// http://localhost:8000/api

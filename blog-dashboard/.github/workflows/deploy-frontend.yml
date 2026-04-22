@@ -1,0 +1,40 @@
+name: Deploy React Frontend to AWS
+
+# This tells GitHub to run this script whenever you push to the 'main' branch
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-lates
+
+        steps:
+        - name: Checkout Code
+          uses: actions/checkout@v4
+
+        - name: Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: '20'
+
+        - name: Install Dependencies
+          run: npm install
+
+        - name: Build Project
+          run: npm run build
+
+        - name: Configure AWS Credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: us-east-1
+
+        - name: Sync Files to S3 Bucket
+          # The --delete flag removes old files so your bucket doesn't bloat
+          run: aws s3 sync dist/ s3://blog-frontend-dashboard-ankyris-2026 --delete
+        
+        - name: Invalidate CloudFront Cache
+          run: aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DIST_ID }} --paths "/*"
