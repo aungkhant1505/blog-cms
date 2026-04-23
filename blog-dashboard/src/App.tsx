@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import BlogFeed from './pages/BlogFeed';
 import SinglePost from './pages/SinglePost';
 import { HelmetProvider } from 'react-helmet-async';
+import CreateCategory from './pages/CreateCategory';
 
 function App() {
   return (
@@ -26,13 +27,14 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-post" element={<CreatePost />} />
           <Route path="/edit-post/:id" element={<EditPost />} />
+          <Route path='/categories/create' element={<CreateCategory />} />
 
           {/* Redirect empty path to login */}
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
       </Router>
     </HelmetProvider>
-    
+
   )
 }
 

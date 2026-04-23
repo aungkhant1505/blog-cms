@@ -16,7 +16,7 @@ class CategoryController extends Controller
     {
         // Returning all categories (useful for populating your React dropdowns)
         $categories = Category::orderBy('name', 'asc')->get();
-        
+
         return response()->json($categories);
     }
 
@@ -27,7 +27,7 @@ class CategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:categories,name',
-            'slug' => 'required|string|max:255|unique:categories,slug',
+            'slug' => 'nullable|string|max:255|unique:categories,slug',
         ]);
 
         $slug = $validated['slug'] ?? Str::slug($validated['name']);

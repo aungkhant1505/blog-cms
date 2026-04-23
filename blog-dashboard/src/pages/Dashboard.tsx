@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, LogOut, LayoutDashboard, Loader2, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, LogOut, LayoutDashboard, Loader2, FileText, FolderPlus } from 'lucide-react';
 import api from '../api/axios';
 
 
@@ -29,7 +29,7 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    const {data: postsData, isLoading, isError} = useQuery<PaginatedResponse>({
+    const { data: postsData, isLoading, isError } = useQuery<PaginatedResponse>({
         queryKey: ['posts'],
         queryFn: async () => {
             const response = await api.get('/posts');
@@ -54,7 +54,7 @@ export default function Dashboard() {
         },
         onSuccess: () => {
             // This forces TanStack Query to refetch the posts automatically!
-            queryClient.invalidateQueries({queryKey: ['posts']});
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
         }
     })
 
@@ -77,6 +77,10 @@ export default function Dashboard() {
                 <nav className="flex-1 p-4 space-y-2">
                     <Link to="/dashboard" className="flex items-center gap-3 bg-blue-600 text-white px-4 py-3 rounded-xl transition-all">
                         <FileText size={20} /> All Posts
+                    </Link>
+
+                    <Link to="/categories/create" className="flex items-center gap-3 text-slate-300 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl transition-all">
+                        <FolderPlus size={20} /> New Category
                     </Link>
                 </nav>
                 <div className="p-4 border-t border-slate-800">
@@ -154,10 +158,10 @@ export default function Dashboard() {
                                                     <Link
                                                         to={`/edit-post/${post.id}`}
                                                         className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-block">
-                                                            <Edit size={18} />
+                                                        <Edit size={18} />
                                                     </Link>
                                                     <button onClick={() => handleDelete(post.id, post.title)} disabled={deleteMutation.isPending}
-                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                                         {deleteMutation.isPending ? (
                                                             <Loader2 size={18} className="animate-spin" />
                                                         ) : (
