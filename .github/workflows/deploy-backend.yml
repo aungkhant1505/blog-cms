@@ -1,0 +1,40 @@
+name: Deploy Laravel Backend to EC2
+
+# Only run this script if code is pushed to main AND the changes are inside the headless-cms folder
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'headless-cms/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Execute Remote SSH Commands
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        # This tells GitHub to log in, navigate to your app, pull the code, and clear the cache
+        script: |
+          cd /var/www/blog-platform/headless-cms
+          git pull origin main
+          
+          # Install any new PHP packages
+          composer install --no-interaction --prefer-dist --optimize-autoloader
+          
+          # Run database migrations automatically
+          php artisan migrate --force
+          
+          # Clear and rebuild Laravel's optimized cache
+          php artisan optimize:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          
+          # Restart the PHP processor so changes take effect instantly
+          sudo systemctl restart php-fpm
