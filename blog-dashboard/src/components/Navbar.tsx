@@ -6,6 +6,7 @@ export default function Navbar() {
     const location = useLocation();
 
     // A simple helper to highlight the active link
+    // updates
     const isActive = (path: string) => location.pathname === path;
 
     return (
