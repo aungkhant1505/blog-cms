@@ -37,7 +37,7 @@ export default function SinglePost() {
     // Create a clean, 150-character excerpt for Google
     const seoDescription = post ? stripHtml(post.content).substring(0, 150) + '...' : '';
 
-    // ✅ FIX: Add a temporary SEO tag to the Loading State
+    // FIX: Add a temporary SEO tag to the Loading State
     if (isLoading) {
         return (
             <div className="min-h-[70vh] flex flex-col items-center justify-center text-blue-600">
@@ -82,10 +82,10 @@ export default function SinglePost() {
     return (
         <article className="max-w-4xl mx-auto px-6 py-12 md:py-20">
             {post && (
-                <SEO 
-                    title={post.title} 
-                    description={seoDescription} 
-                    type="article" 
+                <SEO
+                    title={post.title}
+                    description={seoDescription}
+                    type="article"
                 />
             )}
 
