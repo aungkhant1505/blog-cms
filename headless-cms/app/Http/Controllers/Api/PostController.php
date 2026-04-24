@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class PostController extends Controller
 {
@@ -13,10 +14,10 @@ class PostController extends Controller
      */
     public function index()
     {
-        // Eager load the category and paginate for your React frontend
-        $posts = Post::with('category')
-            ->latest()
-            ->paginate(10);
+        // Check Redis first. If missing, query the DB and store it for 1 hour (3600 seconds)
+        $posts = Cache::remember('public_posts_feed', 3600, function () {
+            return Post::with('category')->latest()->paginate(10);
+        });
 
         return response()->json($posts);
     }
@@ -35,6 +36,8 @@ class PostController extends Controller
         ]);
 
         $post = Post::create($validated);
+
+        Cache::forget('public_posts_feed');
 
         return response()->json([
             'message' => 'Post created successfully',
