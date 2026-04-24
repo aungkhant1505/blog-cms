@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import api from '../api/axios';
 
 // 1. Define the exact shape of your expected API response
 interface Category {
@@ -43,15 +44,12 @@ export default function CreateCategory() {
         setErrorMessage(null);
 
         try {
-            // Note: If your interceptor.js handles the base URL and headers, 
-            // you can just use axios.post('/categories', { name, slug }) here.
-            const response = await axios.post<ApiResponse>(
-                'https://xa2xbe3lnd.execute-api.us-east-1.amazonaws.com/api/categories',
+            const response = await api.post<ApiResponse>(
+                '/categories',
                 { name, slug },
                 {
                     headers: {
-                        'Content-Type': 'application/json',
-                        'x-gateway-secret': 'Ankyris2026Secure!',
+                        'x-gateway-secret': import.meta.env.VITE_GATEWAY_SECRET,
                     }
                 }
             );
@@ -59,9 +57,6 @@ export default function CreateCategory() {
             setStatus('success');
             setName('');
             setSlug('');
-
-            // Optional: You can do something with response.data.category here
-            console.log('Created:', response.data.category.name);
 
         } catch (error) {
             setStatus('error');
