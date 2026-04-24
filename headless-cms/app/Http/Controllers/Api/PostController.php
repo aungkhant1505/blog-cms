@@ -16,7 +16,7 @@ class PostController extends Controller
     {
         // Check Redis first. If missing, query the DB and store it for 1 hour (3600 seconds)
         $posts = Cache::remember('public_posts_feed', 3600, function () {
-            return Post::with('category')->latest()->paginate(10);
+            return Post::with('category')->latest()->paginate(10)->toArray();
         });
 
         return response()->json($posts);
