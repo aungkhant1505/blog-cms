@@ -3,6 +3,7 @@ import axios from 'axios';
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
     headers: {
+        'x-gateway-secret': import.meta.env.VITE_GATEWAY_SECRET,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
