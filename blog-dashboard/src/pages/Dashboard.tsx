@@ -18,7 +18,7 @@ interface Post {
     category: Category | null;
 }
 
-// Laravel pagination response structure
+// Laravel pagination response structure updates
 interface PaginatedResponse {
     data: Post[];
     current_page: number;

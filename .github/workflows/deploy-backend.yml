@@ -28,7 +28,7 @@ jobs:
           git reset --hard origin/main
           
           # Install any new PHP packages
-          composer install --no-interaction --prefer-dist --optimize-autoloader
+          composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
           
           # Run database migrations automatically
           php artisan migrate --force
