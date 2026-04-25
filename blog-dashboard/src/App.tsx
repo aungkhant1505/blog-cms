@@ -11,6 +11,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import CreateCategory from './pages/CreateCategory';
 
 function App() {
+  console.log("Frontend Pipeline Test: VERIFIED");
   return (
     <HelmetProvider>
       <Router>
