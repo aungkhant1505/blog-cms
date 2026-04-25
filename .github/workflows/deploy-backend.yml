@@ -21,8 +21,11 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         # This tells GitHub to log in, navigate to your app, pull the code, and clear the cache
         script: |
+          set -e
+
           cd /var/www/blog-platform/headless-cms
-          git pull origin main
+          git fetch origin main
+          git reset --hard origin/main
           
           # Install any new PHP packages
           composer install --no-interaction --prefer-dist --optimize-autoloader
